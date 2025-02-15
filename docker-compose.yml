@@ -1,0 +1,31 @@
+services:
+  frontend:
+    depends_on: 
+      - backend
+    build: ./frontend
+    ports:
+      - 80:80
+    user: appuser 
+    restart: unless-stopped
+
+  backend: 
+    depends_on: 
+      - db
+    build: ./backend
+    ports: 
+      - 3001:3001
+    environment: 
+      DB_URL: mongodb://tosan:tosan-security@db/mydb
+    command: ./docker-entrypoint.sh
+    restart: unless-stopped
+
+  db:
+    image: mongo:4.0-xenial
+    ports:
+      - 127.0.0.1:27017:27017
+    volumes:
+      - mamad:/data/db
+    restart: unless-stopped
+
+volumes:
+  mamad:

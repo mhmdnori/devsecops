@@ -17,7 +17,7 @@ pipeline {
                     sh '''
                     echo "Stopping and removing existing containers..."
                     docker compose -f ./docker-compose.yml down || true
-                    docker system prune -af || true
+                    docker container prune -f || true
                     '''
                 }
             }

@@ -15,7 +15,7 @@ services:
     ports: 
       - 3001:3001
     environment: 
-      DB_URL: mongodb://tosan:tosan-security@db/mydb
+      DB_URL: mongodb://db/mydb
     command: ./docker-entrypoint.sh
     restart: unless-stopped
 
@@ -25,7 +25,6 @@ services:
       - 127.0.0.1:27017:27017
     volumes:
       - mamad:/data/db
-      - ./mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     restart: unless-stopped
 
 volumes:

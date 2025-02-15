@@ -11,6 +11,18 @@ pipeline {
     }
 
     stages {
+        stage('Cleanup Previous Containers') {
+            steps {
+                script {
+                    sh '''
+                    echo "Stopping and removing existing containers..."
+                    docker compose -f ./docker-compose.yml down || true
+                    docker system prune -af || true
+                    '''
+                }
+            }
+        }
+
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/mhmdnori/devsecops.git'
@@ -20,8 +32,11 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    sh 'docker build -t $FRONTEND_IMAGE:$DOCKER_TAG ./frontend'
-                    sh 'docker build -t $BACKEND_IMAGE:$DOCKER_TAG ./backend'
+                    sh '''
+                    echo "Building Docker images..."
+                    docker build -t ${FRONTEND_IMAGE}:${DOCKER_TAG} ./frontend
+                    docker build -t ${BACKEND_IMAGE}:${DOCKER_TAG} ./backend
+                    '''
                 }
             }
         }
@@ -29,7 +44,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    sh 'docker compose -f ./docker-compose.yml up -d'
+                    sh '''
+                    echo "Deploying services..."
+                    docker compose -f ./docker-compose.yml up -d
+                    '''
                 }
             }
         }
@@ -37,10 +55,13 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo '✅ Pipeline completed successfully!'
         }
         failure {
-            echo 'Pipeline failed!!!!!!!'
+            script {
+                echo '❌ Pipeline failed! Cleaning up resources...'
+                sh 'docker compose -f ./docker-compose.yml down || true'
+            }
         }
     }
 }

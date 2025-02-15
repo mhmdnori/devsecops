@@ -25,6 +25,7 @@ services:
       - 127.0.0.1:27017:27017
     volumes:
       - mamad:/data/db
+      - ./mongo/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     restart: unless-stopped
 
 volumes:

@@ -34,8 +34,8 @@ pipeline {
                 script {
                     sh '''
                     echo "Building Docker images..."
-                    docker build -t ${FRONTEND_IMAGE}:${DOCKER_TAG} ./frontend
-                    docker build -t ${BACKEND_IMAGE}:${DOCKER_TAG} ./backend
+                    docker build --no-cache -t ${FRONTEND_IMAGE}:${DOCKER_TAG} ./frontend
+                    docker build --no-cache -t ${BACKEND_IMAGE}:${DOCKER_TAG} ./backend
                     '''
                 }
             }

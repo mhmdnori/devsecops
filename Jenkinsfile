@@ -8,8 +8,8 @@ pipeline {
         DOCKER_TAG = 'latest'
         PORT = '80'
         HOST = '127.0.0.1'
-        SONAR_TOKEN = credentials('sonar-token') 
-        SONAR_HOST_URL = 'http://localhost:9001'
+        SONAR_HOST_URL = 'http://localhost:9001' 
+        SONAR_TOKEN = credentials('SONARQUBE_TOKEN') 
     }
 
     options {
@@ -34,14 +34,32 @@ pipeline {
             }
         }
 
-        stage('Cleanup Previous Containers') {
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SONARQUBE_TOKEN') {
+                    script {
+                        echo "Running SonarQube Analysis..."
+                        sh """
+                        sonar-scanner \
+                          -Dsonar.projectKey=my-project \
+                          -Dsonar.sources=. \
+                          -Dsonar.host.url=${SONAR_HOST_URL} \
+                          -Dsonar.login=${SONAR_TOKEN}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate Check') {
             steps {
                 script {
-                    sh '''
-                    echo "Stopping and removing existing containers..."
-                    docker compose -f ./docker-compose.yml down || true
-                    docker container prune -f || true
-                    '''
+                    timeout(time: 2, unit: 'MINUTES') {
+                        def qualityGate = waitForQualityGate()
+                        if (qualityGate.status != 'OK') {
+                            error "❌ Pipeline stopped: Quality Gate failed!"
+                        }
+                    }
                 }
             }
         }
@@ -58,36 +76,6 @@ pipeline {
                     docker build --no-cache -t ${FRONTEND_IMAGE}:${DOCKER_TAG} ./frontend
                     docker build --no-cache -t ${BACKEND_IMAGE}:${DOCKER_TAG} ./backend
                     '''
-                }
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    script {
-                        echo "Running SonarQube Analysis..."
-                        sh '''
-                        sonar-scanner \
-                          -Dsonar.projectKey=my-project \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=${SONAR_HOST_URL} \
-                          -Dsonar.login=${SONAR_TOKEN}
-                        '''
-                    }
-                }
-            }
-        }
-
-        stage('Quality Gate Check') {
-            steps {
-                script {
-                    timeout(time: 2, unit: 'MINUTES') {
-                        def qualityGate = waitForQualityGate()
-                        if (qualityGate.status != 'OK') {
-                            error "❌ Pipeline stopped: Quality Gate failed!"
-                        }
-                    }
                 }
             }
         }

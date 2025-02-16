@@ -8,6 +8,8 @@ pipeline {
         DOCKER_TAG = 'latest'
         PORT = '80'
         HOST = '127.0.0.1'
+        SONAR_TOKEN = credentials('sonar-token') 
+        SONAR_HOST_URL = 'http://localhost:9001'
     }
 
     options {
@@ -56,6 +58,36 @@ pipeline {
                     docker build --no-cache -t ${FRONTEND_IMAGE}:${DOCKER_TAG} ./frontend
                     docker build --no-cache -t ${BACKEND_IMAGE}:${DOCKER_TAG} ./backend
                     '''
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    script {
+                        echo "Running SonarQube Analysis..."
+                        sh '''
+                        sonar-scanner \
+                          -Dsonar.projectKey=my-project \
+                          -Dsonar.sources=. \
+                          -Dsonar.host.url=${SONAR_HOST_URL} \
+                          -Dsonar.login=${SONAR_TOKEN}
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate Check') {
+            steps {
+                script {
+                    timeout(time: 2, unit: 'MINUTES') {
+                        def qualityGate = waitForQualityGate()
+                        if (qualityGate.status != 'OK') {
+                            error "❌ Pipeline stopped: Quality Gate failed!"
+                        }
+                    }
                 }
             }
         }

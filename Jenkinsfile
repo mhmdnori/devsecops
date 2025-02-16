@@ -49,8 +49,8 @@ pipeline {
                 script {
                     sh '''
                     echo "Removing old Docker images..."
-                    docker rmi ${FRONTEND_IMAGE}:${DOCKER_TAG} || true
-                    docker rmi ${BACKEND_IMAGE}:${DOCKER_TAG} || true
+                    docker rmi -f ${FRONTEND_IMAGE}:${DOCKER_TAG} || true
+                    docker rmi -f ${BACKEND_IMAGE}:${DOCKER_TAG} || true
 
                     echo "Building Docker images..."
                     docker build --no-cache -t ${FRONTEND_IMAGE}:${DOCKER_TAG} ./frontend

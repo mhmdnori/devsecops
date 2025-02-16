@@ -1,8 +1,9 @@
+version: '3'
 services:
   frontend:
     depends_on: 
       - backend
-    build: ./frontend
+    image: my-frontend-image:latest
     ports:
       - 80:80
     user: appuser 
@@ -11,7 +12,7 @@ services:
   backend: 
     depends_on: 
       - db
-    build: ./backend
+    image: my-backend-image:latest
     ports: 
       - 3001:3001
     environment: 

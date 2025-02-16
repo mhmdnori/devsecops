@@ -23,14 +23,12 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                script {
-                    sh '''
-                    echo "Fetching latest changes from GitHub..."
-                    git fetch origin main
-                    git reset --hard origin/main
-                    git pull origin main
-                    '''
-                }
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: 'main']],
+                    userRemoteConfigs: [[url: 'https://github.com/mhmdnori/devsecops.git']],
+                    extensions: [[$class: 'CleanBeforeCheckout']]
+                ])
             }
         }
 

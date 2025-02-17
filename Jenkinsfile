@@ -9,7 +9,6 @@ pipeline {
         PORT = '80'
         HOST = '127.0.0.1'
         SONAR_HOST_URL = 'http://localhost:9001' 
-        SONAR_TOKEN = credentials('SONARQUBE_TOKEN') 
     }
 
     options {
@@ -36,16 +35,19 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SONARQUBE_TOKEN') {
-                    script {
-                        echo "Running SonarQube Analysis..."
-                        sh """
-                        sonar-scanner \
-                          -Dsonar.projectKey=my-project \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=${SONAR_HOST_URL} \
-                          -Dsonar.login=${SONAR_TOKEN}
-                        """
+                withSonarQubeEnv('SonarQube') {
+                    withCredentials([string(credentialsId: 'SONARQUBE_TOKEN', variable: 'SONAR_AUTH_TOKEN')]) {
+                        script {
+                            echo "Running SonarQube Analysis..."
+                            sh '''
+                            set +x
+                            sonar-scanner \
+                              -Dsonar.projectKey=my-project \
+                              -Dsonar.sources=. \
+                              -Dsonar.host.url=$SONAR_HOST_URL \
+                              -Dsonar.login=$SONAR_AUTH_TOKEN
+                            '''
+                        }
                     }
                 }
             }
@@ -85,7 +87,11 @@ pipeline {
                 script {
                     sh '''
                     echo "Deploying services..."
-                    docker compose -f ./docker-compose.yml up -d
+                    if command -v docker compose > /dev/null 2>&1; then
+                        docker compose -f ./docker-compose.yml up -d
+                    else
+                        docker-compose -f ./docker-compose.yml up -d
+                    fi
                     '''
                 }
             }
@@ -99,7 +105,13 @@ pipeline {
         failure {
             script {
                 echo '❌ Pipeline failed! Cleaning up resources...'
-                sh 'docker compose -f ./docker-compose.yml down || true'
+                sh '''
+                if command -v docker compose > /dev/null 2>&1; then
+                    docker compose -f ./docker-compose.yml down || true
+                else
+                    docker-compose -f ./docker-compose.yml down || true
+                fi
+                '''
             }
         }
         always {

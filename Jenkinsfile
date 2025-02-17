@@ -15,17 +15,17 @@ pipeline {
         skipDefaultCheckout(true)
     }
 
-    stage('Check PATH') {
-        steps {
-            script {
-                sh 'echo $PATH'
-                sh 'echo "SonarQube URL: $SONAR_HOST_URL"'
+    stages {  
+        
+        stage('Check PATH') { 
+            steps {
+                script {
+                    sh 'echo $PATH'
+                    sh 'echo "SonarQube URL: $SONAR_HOST_URL"'
+                }
             }
         }
-    }
 
-
-    stages {
         stage('Clean Workspace') {
             steps {
                 cleanWs()

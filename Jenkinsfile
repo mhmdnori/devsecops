@@ -15,6 +15,16 @@ pipeline {
         skipDefaultCheckout(true)
     }
 
+    stage('Check PATH') {
+        steps {
+            script {
+                sh 'echo $PATH'
+                sh 'echo "SonarQube URL: $SONAR_HOST_URL"'
+            }
+        }
+    }
+
+
     stages {
         stage('Clean Workspace') {
             steps {
@@ -41,7 +51,7 @@ pipeline {
                             echo "Running SonarQube Analysis..."
                             sh '''
                             set +x
-                            sonar-scanner \
+                            /opt/sonar-scanner/sonar-scanner-7.0.1.4817-linux-x64/bin/sonar-scanner \
                               -Dsonar.projectKey=my-project \
                               -Dsonar.sources=. \
                               -Dsonar.host.url=$SONAR_HOST_URL \

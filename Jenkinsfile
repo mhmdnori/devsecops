@@ -42,6 +42,7 @@ pipeline {
                 ])
             }
         }
+
         stage('Dependency-Check Analysis') {
             steps {
                 dependencyCheck odcInstallation: 'SCA', 
@@ -69,7 +70,7 @@ pipeline {
                                         stopBuild: true
             }
         }
-    }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {

@@ -42,7 +42,34 @@ pipeline {
                 ])
             }
         }
+        stage('Dependency-Check Analysis') {
+            steps {
+                dependencyCheck odcInstallation: 'SCA', 
+                                additionalArguments: '''
+                                    --project "my-project"
+                                    --scan ./ 
+                                    --out ./reports/dependency-check
+                                    --format JSON 
+                                    --enableExperimental
+                                    --analyzer python
+                                    --analyzer node
+                                    --failOnCVSS 7.0
+                                    --data /var/lib/jenkins/dependency-check-data
+                                ''', 
+                                nvdCredentialsId: 'nvd-api-key', 
+                                stopBuild: true
+            }
+        }
 
+        stage('Publish Dependency-Check Results') {
+            steps {
+                dependencyCheckPublisher pattern: '**/dependency-check-report.json', 
+                                        failedNewHigh: 1, 
+                                        failedTotalCritical: 0, 
+                                        stopBuild: true
+            }
+        }
+    }
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {

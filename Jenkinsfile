@@ -55,10 +55,19 @@ pipeline {
                               -Dsonar.projectKey=my-project \
                               -Dsonar.sources=. \
                               -Dsonar.host.url=$SONAR_HOST_URL \
-                              -Dsonar.login=$SONARQUBE_TOKEN
+                              -Dsonar.login=$SONARQUBE_TOKEN \
+                              -Dsonar.analysis.outputFile=sonar-report.json
                             '''
                         }
                     }
+                }
+            }
+        }
+        
+        stage('Archive SonarQube Report') {
+            steps {
+                script {
+                    archiveArtifacts artifacts: 'sonar-report.json', fingerprint: true
                 }
             }
         }

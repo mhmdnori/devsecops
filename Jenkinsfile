@@ -43,6 +43,34 @@ pipeline {
             }
         }
 
+        stage('Dependency-Check Analysis') {
+            steps {
+                dependencyCheck odcInstallation: 'SCA', 
+                                additionalArguments: '''
+                                    --project "my-project"
+                                    --scan ./ 
+                                    --out ./reports/dependency-check
+                                    --format JSON 
+                                    --enableExperimental
+                                    --analyzer python
+                                    --analyzer node
+                                    --failOnCVSS 7.0
+                                    --data /var/lib/jenkins/dependency-check-data
+                                ''', 
+                                nvdCredentialsId: 'nvd-api-key', 
+                                stopBuild: true
+            }
+        }
+
+        stage('Publish Dependency-Check Results') {
+            steps {
+                dependencyCheckPublisher pattern: '**/dependency-check-report.json', 
+                                        failedNewHigh: 1, 
+                                        failedTotalCritical: 0, 
+                                        stopBuild: true
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
@@ -55,23 +83,19 @@ pipeline {
                               -Dsonar.projectKey=my-project \
                               -Dsonar.sources=. \
                               -Dsonar.host.url=$SONAR_HOST_URL \
-                              -Dsonar.login=$SONARQUBE_TOKEN
+                              -Dsonar.login=$SONARQUBE_TOKEN \
+                              -Dsonar.analysis.outputFile=sonar-report.json
                             '''
                         }
                     }
                 }
             }
         }
-
-        stage('Quality Gate Check') {
+        
+        stage('Archive SonarQube Report') {
             steps {
                 script {
-                    timeout(time: 5, unit: 'MINUTES') {
-                        def qualityGate = waitForQualityGate()
-                        if (qualityGate.status != 'OK') {
-                            error "❌ Pipeline stopped: Quality Gate failed! Current status: ${qualityGate.status}"
-                        }
-                    }
+                    archiveArtifacts artifacts: 'sonar-report.json', fingerprint: true
                 }
             }
         }

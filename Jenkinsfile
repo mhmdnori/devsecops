@@ -46,7 +46,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    withCredentials([string(credentialsId: 'SONARQUBE_TOKEN', variable: 'SONAR_AUTH_TOKEN')]) {
+                    withCredentials([string(credentialsId: 'SONARQUBE_TOKEN', variable: 'SONARQUBE_TOKEN')]) {
                         script {
                             echo "Running SonarQube Analysis..."
                             sh '''
@@ -55,7 +55,7 @@ pipeline {
                               -Dsonar.projectKey=my-project \
                               -Dsonar.sources=. \
                               -Dsonar.host.url=$SONAR_HOST_URL \
-                              -Dsonar.login=$SONAR_AUTH_TOKEN
+                              -Dsonar.login=$SONARQUBE_TOKEN
                             '''
                         }
                     }
@@ -66,10 +66,10 @@ pipeline {
         stage('Quality Gate Check') {
             steps {
                 script {
-                    timeout(time: 2, unit: 'MINUTES') {
+                    timeout(time: 5, unit: 'MINUTES') {
                         def qualityGate = waitForQualityGate()
                         if (qualityGate.status != 'OK') {
-                            error "❌ Pipeline stopped: Quality Gate failed!"
+                            error "❌ Pipeline stopped: Quality Gate failed! Current status: ${qualityGate.status}"
                         }
                     }
                 }

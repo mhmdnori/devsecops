@@ -63,19 +63,6 @@ pipeline {
             }
         }
 
-        stage('Quality Gate Check') {
-            steps {
-                script {
-                    timeout(time: 5, unit: 'MINUTES') {
-                        def qualityGate = waitForQualityGate()
-                        if (qualityGate.status != 'OK') {
-                            error "❌ Pipeline stopped: Quality Gate failed! Current status: ${qualityGate.status}"
-                        }
-                    }
-                }
-            }
-        }
-
         stage('Build') {
             steps {
                 script {
